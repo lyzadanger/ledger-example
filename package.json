@@ -1,0 +1,21 @@
+{
+  "name": "ledger-exercise",
+  "version": "1.0.0",
+  "description": "Simple ledger accounting",
+  "main": "index.js",
+  "scripts": {
+    "docs": "jsdoc lib/*",
+    "test": "mocha"
+  },
+  "author": "Lyza Danger Gardner",
+  "license": "MIT",
+  "dependencies": {
+    "csv-parse": "^2.0.0",
+    "moment": "^2.19.1"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "jsdoc": "^3.5.5",
+    "mocha": "^4.0.1"
+  }
+}
