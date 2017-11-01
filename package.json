@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "docs": "jsdoc lib/*",
-    "test": "mocha"
+    "test": "mocha",
+    "start": "node index.js"
   },
   "author": "Lyza Danger Gardner",
   "license": "MIT",
