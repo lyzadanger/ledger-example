@@ -74,12 +74,19 @@ describe ('Ledger objects', () => {
         expect(err).to.be.an('Error');
       });
     });
+    it ('should reject if no source provided', () => {
+      const ledger = new Ledger();
+      return ledger.parse().catch(err => {
+        expect(err).to.be.an('Error');
+        expect(err.message).to.have.string('nothing to parse');
+      });
+    });
   });
-  describe ('Ledger#findOrCreateAccount', () => {
+  describe ('Ledger#_findOrCreateAccount', () => {
     it ('should return existing account by account name', () => {
       const ledger = new Ledger();
       return ledger.parseFile(validCSVFile).then(led => {
-        const mary = ledger.findOrCreateAccount('mary');
+        const mary = ledger._findOrCreateAccount('mary');
         expect(mary).to.contain.key('transactions');
         expect(mary.transactions.length).to.be.at.least(2);
       });
@@ -87,28 +94,46 @@ describe ('Ledger objects', () => {
 
     it ('should create a new, empty Account if none exists yet', () => {
       const ledger = new Ledger();
-      const mary = ledger.findOrCreateAccount('mary');
+      const mary = ledger._findOrCreateAccount('mary');
       expect(mary).to.be.an('object');
       expect(mary).to.be.an.instanceOf(Account);
     });
   });
 
-  describe('Ledger#findAccount', () => {
+  describe('Ledger#account', () => {
     it ('should return an existing Account object', () => {
       const ledger = new Ledger();
       return ledger.parseFile(validCSVFile).then(led => {
-        const mary = ledger.findAccount('mary');
+        const mary = ledger.account('mary');
         expect(mary).to.contain.key('transactions');
         expect(mary.transactions.length).to.be.at.least(2);
       });
     });
     it ('should not create a new Account object if nonexistent', () => {
       const ledger = new Ledger();
-      const mary = ledger.findAccount('mary');
+      const mary = ledger.account('mary');
       expect(mary).to.be.an('undefined');
     });
   });
 
+  describe ('Ledger#balance', () => {
+    let ledger;
+    before (() => {
+      ledger = new Ledger();
+      return ledger.parseFile(validCSVFile);
+    });
+    it ('should return a balance for an existing account', () => {
+      expect(ledger.balance('mary')).to.be.a('number');
+    });
+    it ('should return undefined for nonexistent accounts', () => {
+      expect(ledger.balance('garfield')).to.be.an('undefined');
+      expect(ledger.balance('garfield', '2017-01-01')).to.be.an('undefined');
+    });
+    it ('should accept and pass through atDate argument', () => {
+      expect(ledger.balance('mary', '2001-01-01')).to.equal(0);
+      expect(ledger.balance('mary', '2017-11-01')).to.be.at.least(2000);
+    });
+  });
 });
 describe ('Account objects', () => {
   let ledger;
@@ -126,7 +151,7 @@ describe ('Account objects', () => {
     });
   });
 
-  describe ('Account#createTransaction', () => {
+  describe ('Account#addTransaction', () => {
     it ('should debit records when this account is payer', () => {
       const account = new Account('gary');
       const fakeTrx = {
@@ -135,8 +160,8 @@ describe ('Account objects', () => {
         payee: 'phil',
         amount: 42.50
       };
-      account.createTransaction(fakeTrx);
-      expect(account.getBalance()).to.equal(-42.50);
+      account.addTransaction(fakeTrx);
+      expect(account.balance()).to.equal(-42.50);
     });
     it ('should credit records when this account is payee', () => {
       const account = new Account('gary');
@@ -146,8 +171,8 @@ describe ('Account objects', () => {
         payee: 'gary',
         amount: 42.50
       };
-      account.createTransaction(fakeTrx);
-      expect(account.getBalance()).to.equal(42.50);
+      account.addTransaction(fakeTrx);
+      expect(account.balance()).to.equal(42.50);
     });
     it ('should throw if trx is not for this account', () => {
       const account = new Account('gary');
@@ -157,10 +182,10 @@ describe ('Account objects', () => {
         payee: 'bill',
         amount: 42.50
       };
-      expect(() => account.createTransaction(fakeTrx)).to.throw;
+      expect(() => account.addTransaction(fakeTrx)).to.throw;
     });
     it ('should have its own copies of transaction records from Ledger', () => {
-      const bigcorp = ledger.findAccount('bigcorp');
+      const bigcorp = ledger.account('bigcorp');
       bigcorp.transactions[0].amount = 1.00;
       const bigcorpTransactions = ledger.transactions
         .filter(el => el.payer === 'bigcorp');
@@ -168,35 +193,35 @@ describe ('Account objects', () => {
     });
   });
 
-  describe ('Account#getBalance', () => {
+  describe ('Account#balance', () => {
     let ledger;
     before (() => {
       ledger = new Ledger();
       return ledger.parseFile(simpleCSVFile);
     });
     it ('should debit transactions when accountName is payer', () => {
-      const account = ledger.findAccount('john');
-      expect(account.getBalance()).to.equal(-4);
+      const account = ledger.account('john');
+      expect(account.balance()).to.equal(-4);
     });
     it ('should credit transactions when accountName is payee', () => {
-      const account = ledger.findAccount('mary');
-      expect(account.getBalance()).to.equal(4);
+      const account = ledger.account('mary');
+      expect(account.balance()).to.equal(4);
     });
     it ('should accept a date (`endDate`)', () => {
-      const account = ledger.findAccount('mary');
-      expect(account.getBalance('2017-10-26')).to.equal(1);
+      const account = ledger.account('mary');
+      expect(account.balance('2017-10-26')).to.equal(1);
     });
     it ('should start with a 0 balance', () => {
-      const account = ledger.findAccount('mary');
-      expect(account.getBalance('2001-10-26')).to.equal(0);
+      const account = ledger.account('mary');
+      expect(account.balance('2001-10-26')).to.equal(0);
     });
     it ('should throw on a bad `atDate` parameter (invalid date)', () => {
-      const account = ledger.findAccount('mary');
-      expect(() => account.getBalance('ding')).to.throw();
+      const account = ledger.account('mary');
+      expect(() => account.balance('ding')).to.throw();
     });
     it ('should not require atDate', () => {
-      const account = ledger.findAccount('mary');
-      expect(account.getBalance()).to.be.a('number');
+      const account = ledger.account('mary');
+      expect(account.balance()).to.be.a('number');
     });
   });
 
