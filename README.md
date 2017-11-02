@@ -3,6 +3,8 @@
 This package parses a ledger-format CSV input and allows for balance inquiries on any account (payer or payee) contained in the source CSV.
 ## Install
 
+_Note_: This package requires Node.js >= 6.2.0
+
 * clone or download repository
 * `npm install`
 
