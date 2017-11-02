@@ -18,7 +18,7 @@ _Note_: This package requires Node.js >= 6.2.0
 
 ```
 const ledger = new Ledger();
-ledger.parseFile(`${__dirname}/data/ledger-example.csv`).then(() => {
+ledger.parseFile(`./data/ledger-example.csv`).then(() => {
 
   console.log(ledger.balance('mary'));                // -> 3183
   console.log(ledger.balance('mary', '2015-01-17'));  // -> 125
